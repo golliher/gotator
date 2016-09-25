@@ -7,8 +7,11 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type Program struct {
@@ -49,11 +52,19 @@ func loadProgramList() []Program {
 
 func runProgram(program Program) {
 
-	conn, err := net.Dial("tcp", "localhost:32000")
+	ip := viper.Get("IP")
+	port := viper.GetInt("PORT")
+
+	constr := fmt.Sprintf("%s:%d", ip, port)
+
+	conn, err := net.Dial("tcp", constr)
 	if err != nil {
-		fmt.Println("Error making network connection")
+		fmt.Printf("Error making network connection to: %s\n", constr)
+		fmt.Println("Pausing for 30s")
+		time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
 		return
 	}
+
 	fmt.Printf("Running program: %s for %s\n", program.URL, program.Duration)
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
@@ -61,7 +72,42 @@ func runProgram(program Program) {
 	time.Sleep(program.Duration)
 }
 
+// InitializeConfig loads our configuration using Viper package.
+func InitializeConfig() {
+
+	viper.SetConfigType("yaml")
+	// Set config file
+	viper.SetConfigName("config")
+
+	// Add config path
+	//	viper.AddConfigPath("$HOME/.gorotator")
+	viper.AddConfigPath(".")
+
+	// Read in the config
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	// Load default settings
+	viper.SetDefault("debug", false)
+
+	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
+	viper.BindEnv("debug")
+	viper.BindEnv("ip")
+	viper.BindEnv("port")
+
+	// Do some flag handling and any complicated config logic
+	if !viper.IsSet("ip") || !viper.IsSet("port") {
+		fmt.Println("Configuration error.  Both IP and PORT must be set via either config or environment.")
+		os.Exit(1)
+	}
+
+}
+
 func main() {
+
+	InitializeConfig()
 
 	pl := loadProgramList()
 	for {
