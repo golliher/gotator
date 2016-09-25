@@ -48,11 +48,13 @@ func loadProgramList() []Program {
 }
 
 func runProgram(program Program) {
-	fmt.Printf("Running program: %s for %s\n", program.URL, program.Duration)
+
 	conn, err := net.Dial("tcp", "localhost:32000")
 	if err != nil {
 		fmt.Println("Error making network connection")
+		return
 	}
+	fmt.Printf("Running program: %s for %s\n", program.URL, program.Duration)
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
 	fmt.Printf("%s", status)
