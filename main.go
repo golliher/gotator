@@ -26,7 +26,8 @@ type Program struct {
 func loadProgramList() []Program {
 	var list []Program
 
-	bytes, err := ioutil.ReadFile("default.csv")
+	filename := viper.GetString("program_file")
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
