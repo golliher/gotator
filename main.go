@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -25,9 +26,11 @@ type Program struct {
 func loadProgramList() []Program {
 	var list []Program
 
-	webpages := `"http://wsbtv.com","10s"
-"http://slashdot.org","10s"
-`
+	bytes, err := ioutil.ReadFile("default.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+	webpages := string(bytes)
 
 	r := csv.NewReader(strings.NewReader(webpages))
 
@@ -109,8 +112,8 @@ func main() {
 
 	InitializeConfig()
 
-	pl := loadProgramList()
 	for {
+		pl := loadProgramList()
 		for _, p := range pl {
 			runProgram(p)
 		}
