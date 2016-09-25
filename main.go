@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
@@ -106,6 +107,12 @@ func InitializeConfig() {
 		fmt.Println("Configuration error.  Both IP and PORT must be set via either config or environment.")
 		os.Exit(1)
 	}
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("Config file changed:", e.Name)
+		fmt.Println("Content will change on the next loop.")
+	})
 
 }
 
