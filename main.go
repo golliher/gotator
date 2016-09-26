@@ -74,7 +74,22 @@ func runProgram(program Program) {
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
 	fmt.Printf("%s", status)
-	time.Sleep(program.Duration)
+	// time.Sleep(program.Duration)
+
+	abort := make(chan struct{})
+
+	go func() {
+		os.Stdin.Read(make([]byte, 1)) // read a single byte
+		abort <- struct{}{}
+	}()
+
+	select {
+	case <-time.After(program.Duration):
+		// Do nothing.
+	case <-abort:
+		fmt.Println("Current program aborted")
+		return
+	}
 }
 
 // InitializeConfig loads our configuration using Viper package.
