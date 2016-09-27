@@ -55,7 +55,7 @@ func loadProgramList() []Program {
 	return list
 }
 
-func runProgram(program Program) {
+func runProgram(program Program, abort <-chan struct{}) {
 
 	ip := viper.Get("IP")
 	port := viper.GetInt("PORT")
@@ -74,14 +74,6 @@ func runProgram(program Program) {
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
 	fmt.Printf("%s", status)
-	// time.Sleep(program.Duration)
-
-	abort := make(chan struct{})
-
-	go func() {
-		os.Stdin.Read(make([]byte, 1)) // read a single byte
-		abort <- struct{}{}
-	}()
 
 	select {
 	case <-time.After(program.Duration):
@@ -136,9 +128,19 @@ func main() {
 	InitializeConfig()
 
 	for {
+
 		pl := loadProgramList()
 		for _, p := range pl {
-			runProgram(p)
+
+			abort := make(chan struct{})
+			go func() {
+				os.Stdin.Read(make([]byte, 1)) // read a single byte
+				fmt.Println("Got key, that means you want to move to the next program.  Can do!")
+				abort <- struct{}{}
+			}()
+
+			runProgram(p, abort)
+
 		}
 		fmt.Printf("Looping back to beginning\n\n")
 	}
