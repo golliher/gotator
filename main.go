@@ -55,7 +55,15 @@ func loadProgramList() []Program {
 	return list
 }
 
-func runProgram(program Program, abort <-chan struct{}) {
+func runProgram(program Program, abort chan struct{}) {
+
+	// Does this leak goroutines over time because they are created more than they are consumed?
+	// This will need to be revisited when a more elaborate API and/or console UI
+	go func() {
+		os.Stdin.Read(make([]byte, 1)) // read a single byte
+		fmt.Println("Got key, that means you want to move to the next program.  Can do!")
+		abort <- struct{}{}
+	}()
 
 	ip := viper.Get("IP")
 	port := viper.GetInt("PORT")
@@ -127,17 +135,13 @@ func main() {
 
 	InitializeConfig()
 
+	// Control channel to stop running programs immediately
+	abort := make(chan struct{})
+
 	for {
 
 		pl := loadProgramList()
 		for _, p := range pl {
-
-			abort := make(chan struct{})
-			go func() {
-				os.Stdin.Read(make([]byte, 1)) // read a single byte
-				fmt.Println("Got key, that means you want to move to the next program.  Can do!")
-				abort <- struct{}{}
-			}()
 
 			runProgram(p, abort)
 
