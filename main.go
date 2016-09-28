@@ -93,7 +93,7 @@ func runProgram(program Program, abort chan struct{}) {
 }
 
 // InitializeConfig loads our configuration using Viper package.
-func InitializeConfig() {
+func InitializeConfig(abort chan<- struct{}) {
 
 	viper.SetConfigType("yaml")
 	// Set config file
@@ -126,17 +126,18 @@ func InitializeConfig() {
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("Config file changed:", e.Name)
-		fmt.Println("Content will change on the next loop.")
+		abort <- struct{}{}
+		fmt.Println("Content will change immediately.")
 	})
 
 }
 
 func main() {
 
-	InitializeConfig()
-
 	// Control channel to stop running programs immediately
 	abort := make(chan struct{})
+
+	InitializeConfig(abort)
 
 	for {
 
