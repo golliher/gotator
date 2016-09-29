@@ -1,2 +1,3 @@
 "http://www.511ga.org/#u_con_ctl&msg_ctl&l_inc_ctl&vsp_ctl&cam_ctl&a_con_ctl&spec_ctl&zoom=3&lat=4013863.81391&lon=-9377385.61014","1m"
-"https://weather.com/weather/today/l/30308:4:US","30s"
+"https://weather.com/weather/today/l/30308:4:US","15s"
+"https://weather.com/weather/hourbyhour/l/30308:4:US","30s"
