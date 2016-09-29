@@ -24,10 +24,12 @@ type Program struct {
 // Loads a list of programs.
 // A program consists of a list things to display on the rotator along
 // with a number of seconds to display each one before moving on.
-func loadProgramList() []Program {
+func loadProgramList(filename string) []Program {
+
+	fmt.Printf("Loading programs from %s\n", filename)
+
 	var list []Program
 
-	filename := viper.GetString("program_file")
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -48,7 +50,7 @@ func loadProgramList() []Program {
 		}
 		p.URL = record[0]
 		p.Duration, err = time.ParseDuration(record[1])
-		fmt.Printf("Loaded program %s to show for %s.\n", p.URL, p.Duration)
+		fmt.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
 		list = append(list, p)
 	}
 
@@ -61,7 +63,7 @@ func runProgram(program Program, abort chan struct{}) {
 	// This will need to be revisited when a more elaborate API and/or console UI
 	go func() {
 		os.Stdin.Read(make([]byte, 1)) // read a single byte
-		fmt.Println("Got key, that means you want to move to the next program.  Can do!")
+		fmt.Println(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n")
 		abort <- struct{}{}
 	}()
 
@@ -78,10 +80,10 @@ func runProgram(program Program, abort chan struct{}) {
 		return
 	}
 
-	fmt.Printf("Running program: %s for %s\n", program.URL, program.Duration)
+	fmt.Printf("Running program for %s:  %s\n", program.Duration, program.URL)
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
-	fmt.Printf("%s", status)
+	fmt.Printf("  %s", status)
 
 	select {
 	case <-time.After(program.Duration):
@@ -125,9 +127,9 @@ func InitializeConfig(abort chan<- struct{}) {
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("Config file changed:", e.Name)
+		fmt.Println("\nConfig file changed:", e.Name)
 		abort <- struct{}{}
-		fmt.Println("Content will change immediately.")
+		fmt.Println("Content will change immediately.\n")
 	})
 
 }
@@ -139,14 +141,17 @@ func main() {
 
 	InitializeConfig(abort)
 
+	// Load and run the acctive program_file indefinately
 	for {
+		// We pull filename inside the loop because the
+		// configuration can change while our program is running.
+		filename := viper.GetString("program_file")
+		pl := loadProgramList(filename)
 
-		pl := loadProgramList()
 		for _, p := range pl {
-
 			runProgram(p, abort)
-
 		}
-		fmt.Printf("Looping back to beginning\n\n")
+
+		fmt.Printf("\nLooping back to play program list from beginning\n\n")
 	}
 }
