@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"html"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -63,7 +65,7 @@ func runProgram(program Program, abort chan struct{}) {
 	// This will need to be revisited when a more elaborate API and/or console UI
 	go func() {
 		os.Stdin.Read(make([]byte, 1)) // read a single byte
-		fmt.Println(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n")
+		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
 		abort <- struct{}{}
 	}()
 
@@ -129,17 +131,12 @@ func InitializeConfig(abort chan<- struct{}) {
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("\nConfig file changed:", e.Name)
 		abort <- struct{}{}
-		fmt.Println("Content will change immediately.\n")
+		fmt.Printf("Content will change immediately.\n\n")
 	})
 
 }
 
-func main() {
-
-	// Control channel to stop running programs immediately
-	abort := make(chan struct{})
-
-	InitializeConfig(abort)
+func LoadAndRunLoop(abort chan struct{}) {
 
 	// Load and run the acctive program_file indefinately
 	for {
@@ -154,4 +151,22 @@ func main() {
 
 		fmt.Printf("\nLooping back to play program list from beginning\n\n")
 	}
+
+}
+
+func main() {
+
+	// Control channel to stop running programs immediately
+	abort := make(chan struct{})
+
+	InitializeConfig(abort)
+
+	go LoadAndRunLoop(abort)
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	})
+
+	go log.Fatal(http.ListenAndServe(":8080", nil))
+
 }
