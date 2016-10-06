@@ -59,7 +59,7 @@ func loadProgramList(filename string) []Program {
 	return list
 }
 
-func runProgram(program Program, abort chan struct{}) {
+func runProgram(program Program) {
 
 	// Does this leak goroutines over time because they are created more than they are consumed?
 	// This will need to be revisited when a more elaborate API and/or console UI
@@ -97,7 +97,7 @@ func runProgram(program Program, abort chan struct{}) {
 }
 
 // InitializeConfig loads our configuration using Viper package.
-func InitializeConfig(abort chan<- struct{}) {
+func InitializeConfig() {
 
 	viper.SetConfigType("yaml")
 	// Set config file
@@ -136,7 +136,7 @@ func InitializeConfig(abort chan<- struct{}) {
 
 }
 
-func LoadAndRunLoop(abort chan struct{}) {
+func LoadAndRunLoop() {
 
 	// Load and run the acctive program_file indefinately
 	for {
@@ -146,7 +146,7 @@ func LoadAndRunLoop(abort chan struct{}) {
 		pl := loadProgramList(filename)
 
 		for _, p := range pl {
-			runProgram(p, abort)
+			runProgram(p)
 		}
 
 		fmt.Printf("\nLooping back to play program list from beginning\n\n")
@@ -177,14 +177,14 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Control channel to stop running programs immediately
+var abort = make(chan struct{})
+
 func main() {
 
-	// Control channel to stop running programs immediately
-	abort := make(chan struct{})
+	InitializeConfig()
 
-	InitializeConfig(abort)
-
-	go LoadAndRunLoop(abort)
+	go LoadAndRunLoop()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/play", PlayHandler)
