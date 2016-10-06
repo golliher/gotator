@@ -190,6 +190,18 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func PauseHandler(w http.ResponseWriter, r *http.Request) {
+	pause = true
+	log.Println("Pausing from web request")
+	w.Write([]byte("Ok, paused.\n"))
+}
+
+func ResumeHandler(w http.ResponseWriter, r *http.Request) {
+	pause = false
+	log.Println("Unpausing from web request")
+	w.Write([]byte("Ok, unpaused.\n"))
+}
+
 // Control channel to stop running programs immediately (yes, global)
 var abort = make(chan struct{})
 var pause bool = false
@@ -202,6 +214,8 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/play", PlayHandler)
+	r.HandleFunc("/pause", PauseHandler)
+	r.HandleFunc("/resume", ResumeHandler)
 
 	go log.Fatal(http.ListenAndServe(":8080", r))
 
