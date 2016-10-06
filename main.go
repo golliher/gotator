@@ -145,6 +145,11 @@ func LoadAndRunLoop() {
 		// We pull filename inside the loop because the
 		// configuration can change while our program is running.
 		filename := viper.GetString("program_file")
+		for pause == true {
+			fmt.Println("Paused.")
+			time.Sleep(1 * time.Second)
+		}
+
 		pl := loadProgramList(filename)
 
 		for _, p := range pl {
@@ -201,6 +206,13 @@ func ResumeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Unpausing from web request")
 	w.Write([]byte("Ok, unpaused.\n"))
 }
+func SkipHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Skippingfrom web request")
+	pause = false
+	abort <- struct{}{}
+
+	w.Write([]byte("Skipping current programming and resume program list runner from web request.\n"))
+}
 
 // Control channel to stop running programs immediately (yes, global)
 var abort = make(chan struct{})
@@ -216,6 +228,7 @@ func main() {
 	r.HandleFunc("/play", PlayHandler)
 	r.HandleFunc("/pause", PauseHandler)
 	r.HandleFunc("/resume", ResumeHandler)
+	r.HandleFunc("/skip", SkipHandler)
 
 	go log.Fatal(http.ListenAndServe(":8080", r))
 
