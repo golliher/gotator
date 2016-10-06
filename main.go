@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
-	"html"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 )
 
@@ -154,6 +154,29 @@ func LoadAndRunLoop(abort chan struct{}) {
 
 }
 
+func PlayHandler(w http.ResponseWriter, r *http.Request) {
+
+	r.ParseForm()
+	var p Program
+	p.URL = r.Form.Get("url")
+	fmt.Printf("URL: %s\n", p.URL)
+
+	d := r.Form.Get("duration")
+	fmt.Printf("Duration: %s\n", d)
+
+	var err error
+	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
+	if err != nil {
+		fmt.Println("Unable to parse postdata as Program.  Invalid duration")
+		fmt.Println(r.FormValue("duration"))
+	}
+
+	// Needs validation...
+
+	// Now do something with the program.. play it?
+
+}
+
 func main() {
 
 	// Control channel to stop running programs immediately
@@ -163,10 +186,9 @@ func main() {
 
 	go LoadAndRunLoop(abort)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	})
+	r := mux.NewRouter()
+	r.HandleFunc("/play", PlayHandler)
 
-	go log.Fatal(http.ListenAndServe(":8080", nil))
+	go log.Fatal(http.ListenAndServe(":8080", r))
 
 }
