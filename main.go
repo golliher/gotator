@@ -106,6 +106,7 @@ func runProgram(program Program) {
 	go func() {
 		os.Stdin.Read(make([]byte, 1)) // read a single byte
 		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
+		pause = false
 		abort <- struct{}{}
 	}()
 
@@ -147,6 +148,10 @@ func LoadAndRunLoop() {
 		pl := loadProgramList(filename)
 
 		for _, p := range pl {
+			for pause == true {
+				fmt.Println("Program list is paused.")
+				time.Sleep(1 * time.Second)
+			}
 			runProgram(p)
 		}
 
@@ -168,18 +173,26 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
 	if err != nil {
-		fmt.Println("Unable to parse postdata as Program.  Invalid duration")
-		fmt.Println(r.FormValue("duration"))
+		w.Write([]byte("Program rejected.  Invalid duration.\n"))
+		return
 	}
 
 	// Needs validation...
 
 	// Now do something with the program.. play it?
 
+	// Stop normal rotation
+	pause = true
+	abort <- struct{}{}
+
+	go runProgram(p)
+	w.Write([]byte("Program accepted\n"))
+
 }
 
-// Control channel to stop running programs immediately
+// Control channel to stop running programs immediately (yes, global)
 var abort = make(chan struct{})
+var pause bool = false
 
 func main() {
 
