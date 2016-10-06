@@ -20,6 +20,7 @@ go run main.go
 ## Binary releases
 
 Look in the releases tab of Github and you will find pre-compiled binaries for MacOS and Linux
+(coming soon)
 
 # Configuration
 
