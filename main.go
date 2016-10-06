@@ -123,7 +123,7 @@ func runProgram(program Program) {
 		return
 	}
 
-	fmt.Printf("Running program for %s:  %s\n", program.Duration, program.URL)
+	log.Printf("Running program for %s:  %s\n", program.Duration, program.URL)
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
 	fmt.Printf("  %s", status)
