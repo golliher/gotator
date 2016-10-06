@@ -23,6 +23,46 @@ type Program struct {
 	Duration time.Duration
 }
 
+// InitializeConfig loads our configuration using Viper package.
+func InitializeConfig() {
+
+	viper.SetConfigType("yaml")
+	// Set config file
+	viper.SetConfigName("config")
+
+	// Add config path
+	//	viper.AddConfigPath("$HOME/.gorotator")
+	viper.AddConfigPath(".")
+
+	// Read in the config
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	// Load default settings
+	viper.SetDefault("debug", false)
+
+	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
+	viper.BindEnv("debug")
+	viper.BindEnv("ip")
+	viper.BindEnv("port")
+
+	// Do some flag handling and any complicated config logic
+	if !viper.IsSet("ip") || !viper.IsSet("port") {
+		fmt.Println("Configuration error.  Both IP and PORT must be set via either config or environment.")
+		os.Exit(1)
+	}
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("\nConfig file changed:", e.Name)
+		abort <- struct{}{}
+		fmt.Printf("Content will change immediately.\n\n")
+	})
+
+}
+
 // Loads a list of programs.
 // A program consists of a list things to display on the rotator along
 // with a number of seconds to display each one before moving on.
@@ -90,50 +130,11 @@ func runProgram(program Program) {
 	select {
 	case <-time.After(program.Duration):
 		// Do nothing.
+		pause = false
 	case <-abort:
 		fmt.Println("Current program aborted")
 		return
 	}
-}
-
-// InitializeConfig loads our configuration using Viper package.
-func InitializeConfig() {
-
-	viper.SetConfigType("yaml")
-	// Set config file
-	viper.SetConfigName("config")
-
-	// Add config path
-	//	viper.AddConfigPath("$HOME/.gorotator")
-	viper.AddConfigPath(".")
-
-	// Read in the config
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-	}
-
-	// Load default settings
-	viper.SetDefault("debug", false)
-
-	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
-	viper.BindEnv("debug")
-	viper.BindEnv("ip")
-	viper.BindEnv("port")
-
-	// Do some flag handling and any complicated config logic
-	if !viper.IsSet("ip") || !viper.IsSet("port") {
-		fmt.Println("Configuration error.  Both IP and PORT must be set via either config or environment.")
-		os.Exit(1)
-	}
-
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("\nConfig file changed:", e.Name)
-		abort <- struct{}{}
-		fmt.Printf("Content will change immediately.\n\n")
-	})
-
 }
 
 func LoadAndRunLoop() {
