@@ -41,6 +41,7 @@ Look in the releases tab of Github and you will find pre-compiled binaries for M
 # Configuration
 
 config.yaml is the configuration for gorotator itself.
+
 default.csv defines the content you want show by gotator
 
 ## config.yaml
