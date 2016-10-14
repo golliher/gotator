@@ -32,7 +32,7 @@ Gotator has two dependencies:
 ## Source release
 
 With a properly configured Go(lang) environment you can execute Gorotate with 
-    go run main.go
+```go run main.go```
 
 ## Binary releases
 
