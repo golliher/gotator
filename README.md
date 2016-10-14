@@ -1,5 +1,26 @@
 # Overview
-	
+
+Gotator is a program that runs continusouly and rotates content on a
+Firefox browser.  The use I had in mind was to control the rotation of
+content on an information radiator.
+
+I was not satisified with the status quo of using a browser plugin to 
+rotate on a evenly distributed schedule. For some content 10 seconds is 
+enough time.  For other content, 2 minutes might not be enough.
+
+I also wanted to make it easier to 
+switch out content schedules remotely.
+
+Features:
+* Plays a list of URLs each for the specified amount of time.
+* Has a HTTP api for pausing, skipping or playing a URL immediately on screen
+
+Future?
+* Have content dependant on time of day or day of week.  i.e.  Monday morning content
+might be different than Wednesday afternoon, etc.
+* Authentication
+* Encrypt communications
+
 # Install
 
 ## Dependencies
