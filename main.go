@@ -220,6 +220,8 @@ var pause bool = false
 
 func main() {
 
+	// submitted for code review by Zellyn
+
 	InitializeConfig()
 
 	go LoadAndRunLoop()
