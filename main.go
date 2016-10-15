@@ -27,20 +27,16 @@ type Program struct {
 func InitializeConfig() {
 
 	viper.SetConfigType("yaml")
-	// Set config file
 	viper.SetConfigName("config")
 
-	// Add config path
-	//	viper.AddConfigPath("$HOME/.gorotator")
+	viper.AddConfigPath("$HOME/.gotator")
 	viper.AddConfigPath(".")
 
-	// Read in the config
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+	err := viper.ReadInConfig()
+	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
-	// Load default settings
 	viper.SetDefault("debug", false)
 
 	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
@@ -48,16 +44,15 @@ func InitializeConfig() {
 	viper.BindEnv("ip")
 	viper.BindEnv("port")
 
-	// Do some flag handling and any complicated config logic
 	if !viper.IsSet("ip") || !viper.IsSet("port") {
-		fmt.Println("Configuration error.  Both IP and PORT must be set via either config or environment.")
+		fmt.Fprintln(os.Stderr, "Configuration error.  Both IP and PORT must be set via either config or environment.")
 		os.Exit(1)
 	}
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("\nConfig file changed:", e.Name)
-		abort <- struct{}{}
+		skip <- struct{}{}
 		fmt.Printf("Content will change immediately.\n\n")
 	})
 
@@ -92,6 +87,10 @@ func loadProgramList(filename string) []Program {
 		}
 		p.URL = record[0]
 		p.Duration, err = time.ParseDuration(record[1])
+		if err != nil {
+			fmt.Println("Program rejected.  Invalid duration.")
+		}
+
 		fmt.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
 		list = append(list, p)
 	}
@@ -100,15 +99,6 @@ func loadProgramList(filename string) []Program {
 }
 
 func runProgram(program Program) {
-
-	// Does this leak goroutines over time because they are created more than they are consumed?
-	// This will need to be revisited when a more elaborate API and/or console UI
-	go func() {
-		os.Stdin.Read(make([]byte, 1)) // read a single byte
-		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
-		pause = false
-		abort <- struct{}{}
-	}()
 
 	ip := viper.Get("IP")
 	port := viper.GetInt("PORT")
@@ -132,8 +122,8 @@ func runProgram(program Program) {
 	case <-time.After(program.Duration):
 		// Do nothing.
 		pause = false
-	case <-abort:
-		fmt.Println("Current program aborted")
+	case <-skip:
+		fmt.Println("Current program skiped")
 		return
 	}
 }
@@ -188,7 +178,7 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Stop normal rotation
 	pause = true
-	abort <- struct{}{}
+	skip <- struct{}{}
 
 	go runProgram(p)
 	w.Write([]byte("Program accepted\n"))
@@ -209,13 +199,22 @@ func ResumeHandler(w http.ResponseWriter, r *http.Request) {
 func SkipHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Skippingfrom web request")
 	pause = false
-	abort <- struct{}{}
+	skip <- struct{}{}
 
 	w.Write([]byte("Skipping current programming and resume program list runner from web request.\n"))
 }
 
+func readKeyboardLoop() {
+	for {
+		os.Stdin.Read(make([]byte, 1)) // read a single byte
+		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
+		pause = false
+		skip <- struct{}{}
+	}
+}
+
 // Control channel to stop running programs immediately (yes, global)
-var abort = make(chan struct{})
+var skip = make(chan struct{})
 var pause bool = false
 
 func main() {
@@ -223,6 +222,7 @@ func main() {
 	InitializeConfig()
 
 	go LoadAndRunLoop()
+	go readKeyboardLoop()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/play", PlayHandler)
