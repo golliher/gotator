@@ -1,237 +1,235 @@
-// package main
+package main
 
-// import (
-// 	"bufio"
-// 	"encoding/csv"
-// 	"fmt"
-// 	"io"
-// 	"io/ioutil"
-// 	"log"
-// 	"net"
-// 	"net/http"
-// 	"os"
-// 	"strings"
-// 	"time"
+import (
+	"bufio"
+	"encoding/csv"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
-// 	"github.com/fsnotify/fsnotify"
-// 	"github.com/gorilla/mux"
-// 	"github.com/spf13/viper"
-// )
+	"github.com/fsnotify/fsnotify"
+	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+)
 
-// type Program struct {
-// 	URL      string
-// 	Duration time.Duration
-// }
+type Program struct {
+	URL      string
+	Duration time.Duration
+}
 
-// // InitializeConfig loads our configuration using Viper package.
-// func InitializeConfig() {
+// InitializeConfig loads our configuration using Viper package.
+func InitializeConfig() {
 
-// 	viper.SetConfigType("yaml")
-// 	// Set config file
-// 	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
 
-// 	// Add config path
-// 	//	viper.AddConfigPath("$HOME/.gorotator")
-// 	viper.AddConfigPath(".")
+	viper.AddConfigPath("$HOME/.gotator")
+	viper.AddConfigPath(".")
 
-// 	// Read in the config
-// 	err := viper.ReadInConfig() // Find and read the config file
-// 	if err != nil {             // Handle errors reading the config file
-// 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-// 	}
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
 
-// 	// Load default settings
-// 	viper.SetDefault("debug", false)
+	viper.SetDefault("debug", false)
 
-// 	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
-// 	viper.BindEnv("debug")
-// 	viper.BindEnv("ip")
-// 	viper.BindEnv("port")
+	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
+	viper.BindEnv("debug")
+	viper.BindEnv("ip")
+	viper.BindEnv("port")
 
-// 	// Do some flag handling and any complicated config logic
-// 	if !viper.IsSet("ip") || !viper.IsSet("port") {
-// 		fmt.Println("Configuration error.  Both IP and PORT must be set via either config or environment.")
-// 		os.Exit(1)
-// 	}
+	if !viper.IsSet("ip") || !viper.IsSet("port") {
+		fmt.Fprintln(os.Stderr, "Configuration error.  Both IP and PORT must be set via either config or environment.")
+		os.Exit(1)
+	}
 
-// 	viper.WatchConfig()
-// 	viper.OnConfigChange(func(e fsnotify.Event) {
-// 		fmt.Println("\nConfig file changed:", e.Name)
-// 		abort <- struct{}{}
-// 		fmt.Printf("Content will change immediately.\n\n")
-// 	})
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("\nConfig file changed:", e.Name)
+		skip <- struct{}{}
+		fmt.Printf("Content will change immediately.\n\n")
+	})
 
-// }
+}
 
-// // Loads a list of programs.
-// // A program consists of a list things to display on the rotator along
-// // with a number of seconds to display each one before moving on.
-// func loadProgramList(filename string) []Program {
+// Loads a list of programs.
+// A program consists of a list things to display on the rotator along
+// with a number of seconds to display each one before moving on.
+func loadProgramList(filename string) []Program {
 
-// 	fmt.Printf("Loading programs from %s\n", filename)
+	fmt.Printf("Loading programs from %s\n", filename)
 
-// 	var list []Program
+	var list []Program
 
-// 	bytes, err := ioutil.ReadFile(filename)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	webpages := string(bytes)
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	webpages := string(bytes)
 
-// 	r := csv.NewReader(strings.NewReader(webpages))
+	r := csv.NewReader(strings.NewReader(webpages))
 
-// 	for {
-// 		var p Program
-// 		record, err := r.Read()
-// 		if err == io.EOF {
-// 			fmt.Printf("Finished loading programs.\n\n")
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 		p.URL = record[0]
-// 		p.Duration, err = time.ParseDuration(record[1])
-// 		fmt.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
-// 		list = append(list, p)
-// 	}
+	for {
+		var p Program
+		record, err := r.Read()
+		if err == io.EOF {
+			fmt.Printf("Finished loading programs.\n\n")
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		p.URL = record[0]
+		p.Duration, err = time.ParseDuration(record[1])
+		if err != nil {
+			fmt.Println("Program rejected.  Invalid duration.")
+		}
 
-// 	return list
-// }
+		fmt.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
+		list = append(list, p)
+	}
 
-// func runProgram(program Program) {
+	return list
+}
 
-// 	// Does this leak goroutines over time because they are created more than they are consumed?
-// 	// This will need to be revisited when a more elaborate API and/or console UI
-// 	go func() {
-// 		os.Stdin.Read(make([]byte, 1)) // read a single byte
-// 		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
-// 		pause = false
-// 		abort <- struct{}{}
-// 	}()
+func runProgram(program Program) {
 
-// 	ip := viper.Get("IP")
-// 	port := viper.GetInt("PORT")
+	ip := viper.Get("IP")
+	port := viper.GetInt("PORT")
 
-// 	constr := fmt.Sprintf("%s:%d", ip, port)
+	constr := fmt.Sprintf("%s:%d", ip, port)
 
-// 	conn, err := net.Dial("tcp", constr)
-// 	if err != nil {
-// 		fmt.Printf("Error making network connection to: %s\n", constr)
-// 		fmt.Println("Pausing for 30s")
-// 		time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
-// 		return
-// 	}
+	conn, err := net.Dial("tcp", constr)
+	if err != nil {
+		fmt.Printf("Error making network connection to: %s\n", constr)
+		fmt.Println("Pausing for 30s")
+		time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
+		return
+	}
 
-// 	log.Printf("Running program for %s:  %s\n", program.Duration, program.URL)
-// 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
-// 	status, err := bufio.NewReader(conn).ReadString('\n')
-// 	fmt.Printf("  %s", status)
+	log.Printf("Running program for %s:  %s\n", program.Duration, program.URL)
+	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
+	status, err := bufio.NewReader(conn).ReadString('\n')
+	fmt.Printf("  %s", status)
 
-// 	select {
-// 	case <-time.After(program.Duration):
-// 		// Do nothing.
-// 		pause = false
-// 	case <-abort:
-// 		fmt.Println("Current program aborted")
-// 		return
-// 	}
-// }
+	select {
+	case <-time.After(program.Duration):
+		// Do nothing.
+		pause = false
+	case <-skip:
+		fmt.Println("Current program skiped")
+		return
+	}
+}
 
-// func LoadAndRunLoop() {
+func LoadAndRunLoop() {
 
-// 	// Load and run the acctive program_file indefinately
-// 	for {
-// 		// We pull filename inside the loop because the
-// 		// configuration can change while our program is running.
-// 		filename := viper.GetString("program_file")
-// 		for pause == true {
-// 			fmt.Println("Paused.")
-// 			time.Sleep(1 * time.Second)
-// 		}
+	// Load and run the acctive program_file indefinately
+	for {
+		// We pull filename inside the loop because the
+		// configuration can change while our program is running.
+		filename := viper.GetString("program_file")
+		for pause == true {
+			fmt.Println("Paused.")
+			time.Sleep(1 * time.Second)
+		}
 
-// 		pl := loadProgramList(filename)
+		pl := loadProgramList(filename)
 
-// 		for _, p := range pl {
-// 			for pause == true {
-// 				fmt.Println("Program list is paused.")
-// 				time.Sleep(1 * time.Second)
-// 			}
-// 			runProgram(p)
-// 		}
+		for _, p := range pl {
+			for pause == true {
+				fmt.Println("Program list is paused.")
+				time.Sleep(1 * time.Second)
+			}
+			runProgram(p)
+		}
 
-// 		fmt.Printf("\nLooping back to play program list from beginning\n\n")
-// 	}
+		fmt.Printf("\nLooping back to play program list from beginning\n\n")
+	}
 
-// }
+}
 
-// func PlayHandler(w http.ResponseWriter, r *http.Request) {
+func PlayHandler(w http.ResponseWriter, r *http.Request) {
 
-// 	r.ParseForm()
-// 	var p Program
-// 	p.URL = r.Form.Get("url")
-// 	fmt.Printf("URL: %s\n", p.URL)
+	r.ParseForm()
+	var p Program
+	p.URL = r.Form.Get("url")
+	fmt.Printf("URL: %s\n", p.URL)
 
-// 	d := r.Form.Get("duration")
-// 	fmt.Printf("Duration: %s\n", d)
+	d := r.Form.Get("duration")
+	fmt.Printf("Duration: %s\n", d)
 
-// 	var err error
-// 	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
-// 	if err != nil {
-// 		w.Write([]byte("Program rejected.  Invalid duration.\n"))
-// 		return
-// 	}
+	var err error
+	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
+	if err != nil {
+		w.Write([]byte("Program rejected.  Invalid duration.\n"))
+		return
+	}
 
-// 	// Needs validation...
+	// Needs validation...
 
-// 	// Now do something with the program.. play it?
+	// Now do something with the program.. play it?
 
-// 	// Stop normal rotation
-// 	pause = true
-// 	abort <- struct{}{}
+	// Stop normal rotation
+	pause = true
+	skip <- struct{}{}
 
-// 	go runProgram(p)
-// 	w.Write([]byte("Program accepted\n"))
+	go runProgram(p)
+	w.Write([]byte("Program accepted\n"))
 
-// }
+}
 
-// func PauseHandler(w http.ResponseWriter, r *http.Request) {
-// 	pause = true
-// 	log.Println("Pausing from web request")
-// 	w.Write([]byte("Ok, paused.\n"))
-// }
+func PauseHandler(w http.ResponseWriter, r *http.Request) {
+	pause = true
+	log.Println("Pausing from web request")
+	w.Write([]byte("Ok, paused.\n"))
+}
 
-// func ResumeHandler(w http.ResponseWriter, r *http.Request) {
-// 	pause = false
-// 	log.Println("Unpausing from web request")
-// 	w.Write([]byte("Ok, unpaused.\n"))
-// }
-// func SkipHandler(w http.ResponseWriter, r *http.Request) {
-// 	log.Println("Skippingfrom web request")
-// 	pause = false
-// 	abort <- struct{}{}
+func ResumeHandler(w http.ResponseWriter, r *http.Request) {
+	pause = false
+	log.Println("Unpausing from web request")
+	w.Write([]byte("Ok, unpaused.\n"))
+}
+func SkipHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Skippingfrom web request")
+	pause = false
+	skip <- struct{}{}
 
-// 	w.Write([]byte("Skipping current programming and resume program list runner from web request.\n"))
-// }
+	w.Write([]byte("Skipping current programming and resume program list runner from web request.\n"))
+}
 
-// // Control channel to stop running programs immediately (yes, global)
-// var abort = make(chan struct{})
-// var pause bool = false
+func readKeyboardLoop() {
+	for {
+		os.Stdin.Read(make([]byte, 1)) // read a single byte
+		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
+		pause = false
+		skip <- struct{}{}
+	}
+}
 
-// func main() {
+// Control channel to stop running programs immediately (yes, global)
+var skip = make(chan struct{})
+var pause bool = false
 
-// 	// submitted for code review by Zellyn
+func main() {
 
-// 	InitializeConfig()
+	InitializeConfig()
 
-// 	go LoadAndRunLoop()
+	go LoadAndRunLoop()
+	go readKeyboardLoop()
 
-// 	r := mux.NewRouter()
-// 	r.HandleFunc("/play", PlayHandler)
-// 	r.HandleFunc("/pause", PauseHandler)
-// 	r.HandleFunc("/resume", ResumeHandler)
-// 	r.HandleFunc("/skip", SkipHandler)
+	r := mux.NewRouter()
+	r.HandleFunc("/play", PlayHandler)
+	r.HandleFunc("/pause", PauseHandler)
+	r.HandleFunc("/resume", ResumeHandler)
+	r.HandleFunc("/skip", SkipHandler)
 
-// 	go log.Fatal(http.ListenAndServe(":8080", r))
+	go log.Fatal(http.ListenAndServe(":8080", r))
 
-// }
+}
