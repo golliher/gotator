@@ -84,6 +84,7 @@ func loadProgramList(filename string) []Program {
 			break
 		}
 		if err != nil {
+			log.Printf("Error reading line from program file: %s.  Abandoning attempt to read programs.\n", filename)
 			log.Fatal(err)
 		}
 		p.URL = record[0]
