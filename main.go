@@ -74,6 +74,7 @@ func loadProgramList(filename string) []Program {
 	webpages := string(bytes)
 
 	r := csv.NewReader(strings.NewReader(webpages))
+	r.LazyQuotes = true
 
 	for {
 		var p Program
