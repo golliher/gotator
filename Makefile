@@ -1,5 +1,8 @@
 releases: mac-release linux-release
 
+clean:
+	rm gotator-linux gotator-mac
+
 mac-release:
 	go build -o gotator-mac
 
