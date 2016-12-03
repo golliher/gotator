@@ -46,11 +46,15 @@ default.csv defines the content you want show by gotator
 
 ## config.yaml
 
-```IP```            This is the IP address for the FireFox browser that gorotator will control with FF-Remote-Control.
+```FIREFOX_IP```            This is the IP address for the FireFox browser that gorotator will control with FF-Remote-Control.
 
-```PORT```          Likewise this is the PORT that the FF-Remote-Control is configured to listen to.
+```FIREFOX_PORT```          Likewise this is the PORT that the FF-Remote-Control is configured to listen to.
 
 ```program_file```  A CSV file containing a gotator program list.   Gotator ships with a configuration to use default.csv
+
+```apienabled```  Set to 'true' to have gotator listen on HTTP and process REST API requests.  Defaults to false.
+
+```GOTATOR_PORT``` The port Gotator will listen on for API requests.  Defaults to 8080
 
 Note:  You can edit config.yaml and change the program_file without interrupting the running gotator.   Gotator watches for 
 changes to config.yaml and pulls them in without a restart.  This can be useful for swapping out program files for a running

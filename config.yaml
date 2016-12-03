@@ -1,4 +1,6 @@
-IP: localhost
-PORT: 32000
+FIREFOX_IP: localhost
+FIREFOX_PORT: 32000
 program_file: default.csv
+
 #apienabled: true
+GOTATOR_PORT: 8080

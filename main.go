@@ -42,11 +42,12 @@ func InitializeConfig() {
 
 	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
 	viper.BindEnv("debug")
-	viper.BindEnv("ip")
-	viper.BindEnv("port")
+	viper.BindEnv("firefox_ip")
+	viper.BindEnv("firefox_port")
+	viper.BindEnv("gotator_port")
 
-	if !viper.IsSet("ip") || !viper.IsSet("port") {
-		fmt.Fprintln(os.Stderr, "Configuration error.  Both IP and PORT must be set via either config or environment.")
+	if !viper.IsSet("firefox_ip") || !viper.IsSet("firefox_port") {
+		fmt.Fprintln(os.Stderr, "Configuration error.  Both FIREFOX_IP and FIREFOX_PORT must be set via either config or environment.")
 		os.Exit(1)
 	}
 
@@ -103,8 +104,8 @@ func loadProgramList(filename string) []Program {
 
 func runProgram(program Program) {
 
-	ip := viper.Get("IP")
-	port := viper.GetInt("PORT")
+	ip := viper.Get("FIREFOX_IP")
+	port := viper.GetInt("FIREFOX_PORT")
 
 	constr := fmt.Sprintf("%s:%d", ip, port)
 
@@ -260,14 +261,21 @@ func main() {
 	go readKeyboardLoop()
 
 	if viper.IsSet("apienabled") && viper.Get("apienabled") == true {
-		fmt.Println("Starting API server.  Notice:  This allows UNAUTHENTICATED remote control of Firefox. set 'apienabled: false' in config.yaml to disable.\n")
+		listen_port := ":8080"
+		if viper.IsSet("gotator_port") {
+			listen_port = ":" + viper.GetString("gotator_port")
+		}
+
+		fmt.Printf("Starting API server on port %s.  Notice:  This allows UNAUTHENTICATED remote control of Firefox. set 'apienabled: false' in config.yaml to disable.\n",
+			listen_port)
+
 		r := mux.NewRouter()
 		r.HandleFunc("/play", PlayHandler)
 		r.HandleFunc("/pause", PauseHandler)
 		r.HandleFunc("/resume", ResumeHandler)
 		r.HandleFunc("/skip", SkipHandler)
 
-		go log.Fatal(http.ListenAndServe(":8080", r))
+		go log.Fatal(http.ListenAndServe(listen_port, r))
 	} else {
 		fmt.Println("notice: rest API not enabled in configuration and will be unavailable.  set 'apienabled: true' in config.yaml if you want to use it.\n")
 		// If we aren't doing http.ListenAndServe() we need to block here or else gotator would exit immediately
