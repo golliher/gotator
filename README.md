@@ -79,6 +79,9 @@ allows for more hands on control.
 It would be reasonable and expected for you to run gotator in either GNU screen to tmux.    Any console input will be interrepted
 as a request to skip past the current content and show the next thing in rotation.
 
+gotator accepts one command line argument.   Running "gotator version" will print the version and exit.  Normal operation is to simply run
+"gotator".
+
 ## HTTP Control
 
 For purposes of illustration, assume your IP addres is 127.0.0.1.  Remember that go-rotator listens on port 8080.
