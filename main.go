@@ -238,6 +238,7 @@ func readKeyboardLoop() {
 // Control channel to stop running programs immediately (yes, global)
 
 var skip = make(chan struct{})
+var exitprogram = make(chan struct{})
 var pause bool
 var mu = &sync.Mutex{}
 var version = "0.0.4-prerelease"
@@ -258,12 +259,19 @@ func main() {
 	go LoadAndRunLoop()
 	go readKeyboardLoop()
 
-	r := mux.NewRouter()
-	r.HandleFunc("/play", PlayHandler)
-	r.HandleFunc("/pause", PauseHandler)
-	r.HandleFunc("/resume", ResumeHandler)
-	r.HandleFunc("/skip", SkipHandler)
+	if viper.IsSet("apienabled") && viper.Get("apienabled") == true {
+		fmt.Println("Starting API server.  Notice:  This allows UNAUTHENTICATED remote control of Firefox. set 'apienabled: false' in config.yaml to disable.\n")
+		r := mux.NewRouter()
+		r.HandleFunc("/play", PlayHandler)
+		r.HandleFunc("/pause", PauseHandler)
+		r.HandleFunc("/resume", ResumeHandler)
+		r.HandleFunc("/skip", SkipHandler)
 
-	go log.Fatal(http.ListenAndServe(":8080", r))
+		go log.Fatal(http.ListenAndServe(":8080", r))
+	} else {
+		fmt.Println("notice: rest API not enabled in configuration and will be unavailable.  set 'apienabled: true' in config.yaml if you want to use it.\n")
+		// If we aren't doing http.ListenAndServe() we need to block here or else gotator would exit immediately
+		<-exitprogram
+	}
 
 }
