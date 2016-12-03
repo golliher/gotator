@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -123,11 +124,30 @@ func runProgram(program Program) {
 	select {
 	case <-time.After(program.Duration):
 		// Do nothing.
-		pause = false
+		Unpause()
 	case <-skip:
 		fmt.Println("Current program skiped")
 		return
 	}
+}
+
+func Pause() {
+	mu.Lock()
+	pause = true
+	mu.Unlock()
+}
+
+func Unpause() {
+	mu.Lock()
+	pause = false
+	mu.Unlock()
+}
+
+func IsPaused() bool {
+	mu.Lock()
+	defer mu.Unlock()
+
+	return pause == true
 }
 
 func LoadAndRunLoop() {
@@ -137,7 +157,7 @@ func LoadAndRunLoop() {
 		// We pull filename inside the loop because the
 		// configuration can change while our program is running.
 		filename := viper.GetString("program_file")
-		for pause == true {
+		for IsPaused() {
 			fmt.Println("Paused.")
 			time.Sleep(1 * time.Second)
 		}
@@ -145,7 +165,7 @@ func LoadAndRunLoop() {
 		pl := loadProgramList(filename)
 
 		for _, p := range pl {
-			for pause == true {
+			for IsPaused() {
 				fmt.Println("Program list is paused.")
 				time.Sleep(1 * time.Second)
 			}
@@ -179,7 +199,7 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	// Now do something with the program.. play it?
 
 	// Stop normal rotation
-	pause = true
+	Pause()
 	skip <- struct{}{}
 
 	go runProgram(p)
@@ -188,19 +208,19 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PauseHandler(w http.ResponseWriter, r *http.Request) {
-	pause = true
+	Pause()
 	log.Println("Pausing from web request")
 	w.Write([]byte("Ok, paused.\n"))
 }
 
 func ResumeHandler(w http.ResponseWriter, r *http.Request) {
-	pause = false
+	Unpause()
 	log.Println("Unpausing from web request")
 	w.Write([]byte("Ok, unpaused.\n"))
 }
 func SkipHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Skippingfrom web request")
-	pause = false
+	Unpause()
 	skip <- struct{}{}
 
 	w.Write([]byte("Skipping current programming and resume program list runner from web request.\n"))
@@ -210,16 +230,20 @@ func readKeyboardLoop() {
 	for {
 		os.Stdin.Read(make([]byte, 1)) // read a single byte
 		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
-		pause = false
+		Unpause()
 		skip <- struct{}{}
 	}
 }
 
 // Control channel to stop running programs immediately (yes, global)
+
 var skip = make(chan struct{})
-var pause bool = false
+var pause bool
+var mu = &sync.Mutex{}
 
 func main() {
+
+	Unpause()
 
 	InitializeConfig()
 
