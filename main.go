@@ -240,9 +240,17 @@ func readKeyboardLoop() {
 var skip = make(chan struct{})
 var pause bool
 var mu = &sync.Mutex{}
+var version = "0.0.4-prerelease"
 
 func main() {
 
+	if len(os.Args) > 1 {
+		if os.Args[1] == "version" {
+			fmt.Println("Gotator version:", version)
+			os.Exit(0)
+		}
+	}
+	fmt.Println("Starting gotator: version", version)
 	Unpause()
 
 	InitializeConfig()
