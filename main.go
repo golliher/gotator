@@ -112,6 +112,7 @@ func runProgram(program Program) {
 	conn, err := net.Dial("tcp", constr)
 	if err != nil {
 		fmt.Printf("Error making network connection to: %s\n", constr)
+		fmt.Println("It is possible Firefox needs to be started or restarted.")
 		fmt.Println("Pausing for 30s")
 		time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
 		return
