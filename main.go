@@ -128,7 +128,7 @@ func runProgram(program Program) {
 		// Do nothing.
 		Unpause()
 	case <-skip:
-		fmt.Println("Current program skiped")
+		fmt.Println("Current program skipped")
 		return
 	}
 }
