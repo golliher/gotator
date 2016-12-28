@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -118,10 +119,25 @@ func runProgram(program Program) {
 		return
 	}
 
-	log.Printf("Running program for %s:  %s\n", program.Duration, program.URL)
+	fmt.Printf("Running program for %s:  %s -> RESULT: ", program.Duration, program.URL)
 	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 	status, err := bufio.NewReader(conn).ReadString('\n')
-	fmt.Printf("  %s", status)
+	if err != nil {
+		fmt.Println("ERROR - URL didn't load as desired.")
+	}
+
+	var statusParsed interface{}
+	err = json.Unmarshal([]byte(status), &statusParsed)
+
+	m := statusParsed.(map[string]interface{})
+
+	if m["result"] == program.URL {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("ERROR - URL didn't load as desired.")
+	}
+
+	// fmt.Printf("  %s", status)
 
 	select {
 	case <-time.After(program.Duration):
