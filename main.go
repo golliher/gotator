@@ -137,8 +137,6 @@ func runProgram(program Program) {
 		fmt.Println("ERROR - URL didn't load as desired.")
 	}
 
-	// fmt.Printf("  %s", status)
-
 	select {
 	case <-time.After(program.Duration):
 		// Do nothing.
