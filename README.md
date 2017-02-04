@@ -29,14 +29,18 @@ Gotator has two dependencies:
 1. Firefox
 2. [FF-Remote-Control (a FireFox extension)](https://github.com/FF-Remote-Control/FF-Remote-Control/releases)
 
+## Binary releases
+
+NEW as of 0.0.5: I'm trying out equinox.io to make it easier for you to install gotator.  Let me know what you think.
+https://dl.equinox.io/darrell_golliher/gotator/stable
+
+Older releases are in the releases tab here on Github. You will find pre-compiled binaries for MacOS and Linux.
+
+
 ## Source release
 
 With a properly configured Go(lang) environment you can execute Gorotate with 
 ```go run main.go```
-
-## Binary releases
-
-Look in the releases tab of Github and you will find pre-compiled binaries for MacOS and Linux
 
 # Configuration
 
