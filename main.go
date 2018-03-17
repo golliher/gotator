@@ -66,7 +66,7 @@ func InitializeConfig() {
 // with a number of seconds to display each one before moving on.
 func loadProgramList(filename string) []Program {
 
-	fmt.Printf("Loading programs from %s\n", filename)
+	log.Printf("Loading programs from %s\n", filename)
 
 	var list []Program
 
@@ -83,7 +83,7 @@ func loadProgramList(filename string) []Program {
 		var p Program
 		record, err := r.Read()
 		if err == io.EOF {
-			fmt.Printf("Finished loading programs.\n\n")
+			log.Println("Finished loading programs.")
 			break
 		}
 		if err != nil {
@@ -93,10 +93,10 @@ func loadProgramList(filename string) []Program {
 		p.URL = record[0]
 		p.Duration, err = time.ParseDuration(record[1])
 		if err != nil {
-			fmt.Println("Program rejected.  Invalid duration.")
+			log.Println("Program rejected.  Invalid duration.")
 		}
 
-		fmt.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
+		log.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
 		list = append(list, p)
 	}
 
@@ -142,7 +142,8 @@ func runProgram(program Program) {
 		// Do nothing.
 		Unpause()
 	case <-skip:
-		fmt.Println("Current program skipped")
+		log.Println("Current program skipped")
+
 		return
 	}
 }
@@ -182,13 +183,13 @@ func LoadAndRunLoop() {
 
 		for _, p := range pl {
 			for IsPaused() {
-				fmt.Println("Program list is paused.")
+				// log.Println("Program list is paused.")
 				time.Sleep(1 * time.Second)
 			}
 			runProgram(p)
 		}
 
-		fmt.Printf("\nLooping back to play program list from beginning\n\n")
+		log.Println("Looping back to play program list from beginning")
 	}
 
 }
@@ -198,10 +199,10 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	var p Program
 	p.URL = r.Form.Get("url")
-	fmt.Printf("URL: %s\n", p.URL)
+	log.Printf("URL: %s\n", p.URL)
 
 	d := r.Form.Get("duration")
-	fmt.Printf("Duration: %s\n", d)
+	log.Printf("Duration: %s\n", d)
 
 	var err error
 	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
@@ -245,7 +246,7 @@ func SkipHandler(w http.ResponseWriter, r *http.Request) {
 func readKeyboardLoop() {
 	for {
 		os.Stdin.Read(make([]byte, 1)) // read a single byte
-		fmt.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
+		log.Printf(" >> Got keyboard input, that means you want to move to the next program.  Can do! << \n\n")
 		Unpause()
 		skip <- struct{}{}
 	}
@@ -281,7 +282,7 @@ func main() {
 			listen_port = ":" + viper.GetString("gotator_port")
 		}
 
-		fmt.Printf("Starting API server on port %s.  Notice:  This allows UNAUTHENTICATED remote control of Firefox. set 'apienabled: false' in config.yaml to disable.\n",
+		log.Printf("Starting API server on port %s.  Notice:  This allows UNAUTHENTICATED remote control of Firefox. set 'apienabled: false' in config.yaml to disable.\n",
 			listen_port)
 
 		r := mux.NewRouter()
@@ -292,7 +293,7 @@ func main() {
 
 		go log.Fatal(http.ListenAndServe(listen_port, r))
 	} else {
-		fmt.Println("notice: rest API not enabled in configuration and will be unavailable.  set 'apienabled: true' in config.yaml if you want to use it.\n")
+		log.Println("notice: rest API not enabled in configuration and will be unavailable.  set 'apienabled: true' in config.yaml if you want to use it.\n")
 		// If we aren't doing http.ListenAndServe() we need to block here or else gotator would exit immediately
 		<-exitprogram
 	}
