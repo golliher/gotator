@@ -179,10 +179,9 @@ func runProgram(program Program) {
 
 	select {
 	case <-time.After(program.Duration):
-		Unpause()
+		return
 	case <-skip:
 		log.Println("Current program skipped")
-
 		return
 	}
 }
@@ -257,12 +256,9 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	// Stop normal rotation
 	Pause()
 
-	// While paused, go ahead and also skip so that upon resume we move to the next program
-	skip <- struct{}{}
-
 	runProgram(p)
 	w.Write([]byte("Program accepted\n"))
-
+	Unpause()
 }
 
 func PauseHandler(w http.ResponseWriter, r *http.Request) {
@@ -310,7 +306,6 @@ func main() {
 		}
 	}
 	log.Println("Starting gotator: version", version)
-	Unpause()
 
 	InitializeConfig()
 
