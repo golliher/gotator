@@ -138,7 +138,7 @@ func runProgram(program Program) {
 			return
 		}
 
-		// Actual controll of browser starts here
+		// Actual control of browser starts here
 		fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
 		status, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
@@ -179,7 +179,6 @@ func runProgram(program Program) {
 
 	select {
 	case <-time.After(program.Duration):
-		// Do nothing.
 		Unpause()
 	case <-skip:
 		log.Println("Current program skipped")
@@ -192,12 +191,14 @@ func Pause() {
 	mu.Lock()
 	pause = true
 	mu.Unlock()
+	log.Println("Paused")
 }
 
 func Unpause() {
 	mu.Lock()
 	pause = false
 	mu.Unlock()
+	log.Println("Unpaused")
 }
 
 func IsPaused() bool {
@@ -216,6 +217,7 @@ func LoadAndRunLoop() {
 		filename := viper.GetString("program_file")
 
 		for IsPaused() {
+			fmt.Printf(".")
 			time.Sleep(1 * time.Second)
 		}
 
@@ -223,6 +225,7 @@ func LoadAndRunLoop() {
 
 		for _, p := range pl {
 			for IsPaused() {
+				fmt.Printf("X")
 				time.Sleep(1 * time.Second)
 			}
 			runProgram(p)
@@ -243,16 +246,13 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	d := r.Form.Get("duration")
 	log.Printf("Duration: %s\n", d)
 
+	// CAREFUL: There may be bugs here...
 	var err error
 	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
 	if err != nil {
 		w.Write([]byte("Program rejected.  Invalid duration.\n"))
 		return
 	}
-
-	// Needs validation...
-
-	// Now do something with the program.. play it?
 
 	// Stop normal rotation
 	Pause()
@@ -277,7 +277,7 @@ func ResumeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Ok, unpaused.\n"))
 }
 func SkipHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Skippingfrom web request")
+	log.Println("Skipping from web request")
 	Unpause()
 	skip <- struct{}{}
 
