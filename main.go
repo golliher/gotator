@@ -260,7 +260,7 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	// While paused, go ahead and also skip so that upon resume we move to the next program
 	skip <- struct{}{}
 
-	go runProgram(p)
+	runProgram(p)
 	w.Write([]byte("Program accepted\n"))
 
 }
