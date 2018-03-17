@@ -214,8 +214,8 @@ func LoadAndRunLoop() {
 		// We pull filename inside the loop because the
 		// configuration can change while our program is running.
 		filename := viper.GetString("program_file")
+
 		for IsPaused() {
-			fmt.Println("Paused.")
 			time.Sleep(1 * time.Second)
 		}
 
@@ -223,7 +223,6 @@ func LoadAndRunLoop() {
 
 		for _, p := range pl {
 			for IsPaused() {
-				// log.Println("Program list is paused.")
 				time.Sleep(1 * time.Second)
 			}
 			runProgram(p)
@@ -257,6 +256,8 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Stop normal rotation
 	Pause()
+
+	// While paused, go ahead and also skip so that upon resume we move to the next program
 	skip <- struct{}{}
 
 	go runProgram(p)
@@ -266,7 +267,7 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 
 func PauseHandler(w http.ResponseWriter, r *http.Request) {
 	Pause()
-	log.Println("Pausing from web request")
+	log.Println("Paused from web request")
 	w.Write([]byte("Ok, paused.\n"))
 }
 
