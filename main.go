@@ -138,15 +138,43 @@ func runProgram(program Program) {
 			return
 		}
 
-	var statusParsed interface{}
-	err = json.Unmarshal([]byte(status), &statusParsed)
+		// Actual controll of browser starts here
+		fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
+		status, err := bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			log.Println("ERROR - URL didn't load as desired.")
+		}
 
-	m := statusParsed.(map[string]interface{})
+		var statusParsed interface{}
+		err = json.Unmarshal([]byte(status), &statusParsed)
 
-	if m["result"] == program.URL {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("ERROR - URL didn't load as desired.")
+		m := statusParsed.(map[string]interface{})
+
+		if m["result"] == program.URL {
+			log.Println("RESULT: OK")
+		} else {
+			log.Println("RESULT: ERROR - URL didn't load as desired.")
+		}
+	}
+	if mode == 2 {
+		// Connect using Marionette
+		client := marionette_client.NewClient()
+
+		err := client.Connect("", 0) // this are the default marionette values for hostname, and port
+		if err != nil {
+			log.Println("Can't connect to firefox.  Sorry.")
+			log.Println("It is possible Firefox needs to be started or restarted.")
+			log.Println("Pausing for 30s")
+			time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
+			return
+		}
+		client.NewSession("", nil) // let marionette generate the Session ID with it's default Capabilities
+		client.Navigate(program.URL)
+
+		// experiment with injecting randon script
+		// Maybe someday have a CSS overlay to give countdown until rotation?
+		// args := []interface{}{}
+		// client.ExecuteScript("alert('o hai there!');", args, 1000, false)
 	}
 
 	select {
