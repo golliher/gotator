@@ -274,7 +274,10 @@ func main() {
 	InitializeConfig()
 
 	go LoadAndRunLoop()
-	go readKeyboardLoop()
+
+	if viper.IsSet("interactive") && viper.Get("interactive") == true {
+		go readKeyboardLoop()
+	}
 
 	if viper.IsSet("apienabled") && viper.Get("apienabled") == true {
 		listen_port := ":8080"
