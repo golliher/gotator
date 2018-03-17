@@ -18,6 +18,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+
+	"github.com/njasm/marionette_client"
 )
 
 type Program struct {
@@ -50,6 +52,15 @@ func InitializeConfig() {
 	if !viper.IsSet("firefox_ip") || !viper.IsSet("firefox_port") {
 		fmt.Fprintln(os.Stderr, "Configuration error.  Both FIREFOX_IP and FIREFOX_PORT must be set via either config or environment.")
 		os.Exit(1)
+	}
+	mode := viper.Get("FIREFOX_MODE")
+	ipStr := viper.Get("FIREFOX_IP")
+	if mode == 1 {
+		log.Println("Using MODE1 (aka. FF Remote Control plugin) -- [DEPRECATED in newer versio of Firefox]")
+	}
+	if mode == 2 {
+		log.Printf("Using MODE2:  Firefox Marionette protocol.  ")
+		log.Printf("  IP is %s, but localhost will be used instead.\n", ipStr)
 	}
 
 	viper.WatchConfig()
@@ -111,21 +122,21 @@ func runProgram(program Program) {
 
 	constr := fmt.Sprintf("%s:%d", ip, port)
 
-	conn, err := net.Dial("tcp", constr)
-	if err != nil {
-		fmt.Printf("Error making network connection to: %s\n", constr)
-		fmt.Println("It is possible Firefox needs to be started or restarted.")
-		fmt.Println("Pausing for 30s")
-		time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
-		return
-	}
+	log.Printf("Running program for %s", program.Duration)
+	log.Printf("URL %s", program.URL)
 
-	fmt.Printf("Running program for %s:  %s -> RESULT: ", program.Duration, program.URL)
-	fmt.Fprintf(conn, "window.location='%s'\n", program.URL)
-	status, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		fmt.Println("ERROR - URL didn't load as desired.")
-	}
+	mode := viper.Get("FIREFOX_MODE")
+	if mode == 1 {
+		// Connect to FF Remote Control
+		conn, err := net.Dial("tcp", constr)
+		if err != nil {
+			log.Printf("  Error making network connection to: %s\n", constr)
+			log.Println("  It is possible Firefox needs to be started or restarted.")
+			log.Println("  It is possible FF Remote Control plugin is not installed.")
+			log.Println("  Pausing for 30s")
+			time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
+			return
+		}
 
 	var statusParsed interface{}
 	err = json.Unmarshal([]byte(status), &statusParsed)
