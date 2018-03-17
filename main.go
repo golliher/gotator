@@ -54,9 +54,10 @@ func InitializeConfig() {
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("\nConfig file changed:", e.Name)
+		log.Println("\nConfig file changed:", e.Name)
 		skip <- struct{}{}
-		fmt.Printf("Content will change immediately.\n\n")
+		log.Printf("Content will change immediately.\n\n")
+
 	})
 
 }
@@ -264,11 +265,11 @@ func main() {
 
 	if len(os.Args) > 1 {
 		if os.Args[1] == "version" {
-			fmt.Println("Gotator version:", version)
+			log.Println("Gotator version:", version)
 			os.Exit(0)
 		}
 	}
-	fmt.Println("Starting gotator: version", version)
+	log.Println("Starting gotator: version", version)
 	Unpause()
 
 	InitializeConfig()
