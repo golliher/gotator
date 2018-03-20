@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/chromedp/chromedp"
+	"github.com/chromedp/chromedp/client"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
@@ -61,6 +64,9 @@ func InitializeConfig() {
 	if mode == 2 {
 		log.Printf("Using MODE2:  Firefox Marionette protocol.  ")
 		log.Printf("  IP is %s, but localhost will be used instead.\n", ipStr)
+	}
+	if mode == 3 {
+		log.Printf("Using MODE3:  Chrome Debugging protocol.  ")
 	}
 
 	viper.WatchConfig()
@@ -175,6 +181,29 @@ func runProgram(program Program) {
 		// Maybe someday have a CSS overlay to give countdown until rotation?
 		// args := []interface{}{}
 		// client.ExecuteScript("alert('o hai there!');", args, 1000, false)
+	}
+	if mode == 3 {
+
+		var err error
+
+		// create context
+		ctxt, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// c, err := chromedp.New(ctxt, chromedp.WithTargets(client.New().WatchPageTargets(ctxt)) , chromedp.WithLog(log.Printf))
+		c, err := chromedp.New(ctxt, chromedp.WithTargets(client.New().WatchPageTargets(ctxt)))
+
+		if err != nil {
+			log.Println("Whatever")
+			log.Fatal(err)
+		}
+
+		err = c.Run(ctxt, chromedp.Navigate(program.URL))
+		if err != nil {
+			log.Println("That' cool")
+			log.Fatal(err)
+		}
+
 	}
 
 	select {
