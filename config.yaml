@@ -3,6 +3,6 @@ BROWSER_PORT: 9222
 BROWSER_CONTROL_MODE: 3
 program_file: default.csv
 
-interactive: true
+interactive: false
 apienabled: true
 GOTATOR_PORT: 8081

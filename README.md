@@ -1,8 +1,8 @@
 # Overview
 
 Gotator is a program that runs continusouly and rotates content on a
-Firefox browser.  The use I had in mind was to control the rotation of
-content on an information radiator.
+browser.  Firefox and Chrome are supported.  The use I had in mind
+was to control the rotation of content on an information radiator.
 
 I was not satisified with the status quo of using a browser plugin to 
 rotate on a evenly distributed schedule. For some content 10 seconds is 
@@ -12,22 +12,22 @@ I also wanted to make it easier to
 switch out content schedules remotely.
 
 Features:
+
 * Plays a list of URLs each for the specified amount of time.
 * Has a HTTP api for pausing, skipping or playing a URL immediately on screen
-
-Future?
-* Have content dependant on time of day or day of week.  i.e.  Monday morning content
-might be different than Wednesday afternoon, etc.
-* Authentication
-* Encrypt communications
 
 # Install
 
 ## Dependencies
-Gotator has two dependencies:
+Gotator can control Firefox or Chrome.  You will need one or the other and you will need to start them
+with either [Marionette](https://firefox-source-docs.mozilla.org/testing/marionette/marionette/index.html) for Firefox or
+remote debugging enabled for Chrome.
 
-1. Firefox
-2. [FF-Remote-Control (a FireFox extension)](https://github.com/FF-Remote-Control/FF-Remote-Control/releases)
+### Firefox example (Mac)
+```open -n -a Firefox.app --args --marionette -P Automation```
+
+### Chrome example (Mac)
+```(cd "/Applications/Google Chrome.app/Contents/MacOS" && ./Google\ Chrome --remote-debugging-port=9222)```
 
 ## Binary releases
 
@@ -50,9 +50,15 @@ default.csv defines the content you want show by gotator
 
 ## config.yaml
 
-```FIREFOX_IP```            This is the IP address for the FireFox browser that gorotator will control with FF-Remote-Control.
+```BROWSER_IP```            This is the IP address for the FireFox browser that gorotator will control with FF-Remote-Control.
 
-```FIREFOX_PORT```          Likewise this is the PORT that the FF-Remote-Control is configured to listen to.
+```BROWSER_PORT```          Likewise this is the PORT that Firfox Marionette or Chrome are listenting to.  Hint: It's probably 9222
+
+```BROWSER_MODE``` As of version 0.1.0 Gotator supports three operating modes.
+
+	1 = original FF-remote-control plugin (deprecated)
+	2 = Fireforx Marionette 
+	3 = Chrome debugging protocol
 
 ```program_file```  A CSV file containing a gotator program list.   Gotator ships with a configuration to use default.csv
 
@@ -64,8 +70,7 @@ Note:  You can edit config.yaml and change the program_file without interrupting
 changes to config.yaml and pulls them in without a restart.  This can be useful for swapping out program files for a running
 gotator. 
 
-Also note, go-rotator itself listens for HTTP requests.  At present
-these requests are not authenticated and the port is not configurable.   The port is 8080.
+Also note, go-rotator itself listens for HTTP requests.
 
 Pull requests are welcome.  I intend to improve both when I get the time.  I work on this only over morning coffee.
 
@@ -85,7 +90,7 @@ The original use for gotator was to run scheduled content without further user i
 allows for more hands on control.
 
 It would be reasonable and expected for you to run gotator in either GNU screen to tmux.    Any console input will be interrepted
-as a request to skip past the current content and show the next thing in rotation.
+as a request to skip past the current content and show the next thing in rotation if you have set ```interactive: true``` in your config file.
 
 gotator accepts one command line argument.   Running "gotator version" will print the version and exit.  Normal operation is to simply run
 "gotator".
@@ -109,3 +114,12 @@ For purposes of illustration, assume your IP addres is 127.0.0.1.  Remember that
 ### Play
 
 ```http://127.0.0.1:8080/play?url='http://example.com'&duration='30s'``` - Pauses normal rotation, shows the requested URL immediately for the specified duration
+
+# Future?
+
+* Have content dependant on time of day or day of week.  i.e.  Monday morning content
+might be different than Wednesday afternoon, etc.
+* Authentication
+* Encrypt communications
+
+
