@@ -16,13 +16,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chromedp/chromedp"
-	"github.com/chromedp/chromedp/client"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
+
+	// "github.com/chromedp/chromedp"
+	// "github.com/chromedp/chromedp/client"
+	// Forked from above with patches for this issue
+	// https://github.com/chromedp/chromedp/issues/75
+	"github.com/rjeczalik/chromedp"
+	"github.com/rjeczalik/chromedp/client"
 
 	"github.com/njasm/marionette_client"
+	"github.com/spf13/viper"
 )
 
 type Program struct {
