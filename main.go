@@ -53,16 +53,16 @@ func InitializeConfig() {
 
 	viper.SetEnvPrefix("gorotator") // will be uppercased automatically
 	viper.BindEnv("debug")
-	viper.BindEnv("firefox_ip")
-	viper.BindEnv("firefox_port")
+	viper.BindEnv("browser_ip")
+	viper.BindEnv("browser_port")
 	viper.BindEnv("gotator_port")
 
-	if !viper.IsSet("firefox_ip") || !viper.IsSet("firefox_port") {
-		fmt.Fprintln(os.Stderr, "Configuration error.  Both FIREFOX_IP and FIREFOX_PORT must be set via either config or environment.")
+	if !viper.IsSet("browser_ip") || !viper.IsSet("browser_port") {
+		fmt.Fprintln(os.Stderr, "Configuration error.  Both BROWSER_IP and BROWSER_PORT must be set via either config or environment.")
 		os.Exit(1)
 	}
-	mode := viper.Get("FIREFOX_MODE")
-	ipStr := viper.Get("FIREFOX_IP")
+	mode := viper.Get("BROWSER_CONTROL_MODE")
+	ipStr := viper.Get("BROWSER_IP")
 	if mode == 1 {
 		log.Println("Using MODE1 (aka. FF Remote Control plugin) -- [DEPRECATED in newer versio of Firefox]")
 	}
@@ -128,15 +128,15 @@ func loadProgramList(filename string) []Program {
 
 func runProgram(program Program) {
 
-	ip := viper.Get("FIREFOX_IP")
-	port := viper.GetInt("FIREFOX_PORT")
+	ip := viper.Get("BROWSER_IP")
+	port := viper.GetInt("BROWSER_PORT")
 
 	constr := fmt.Sprintf("%s:%d", ip, port)
 
 	log.Printf("Running program for %s", program.Duration)
 	log.Printf("URL %s", program.URL)
 
-	mode := viper.Get("FIREFOX_MODE")
+	mode := viper.Get("BROWSER_CONTROL_MODE")
 	if mode == 1 {
 		// Connect to FF Remote Control
 		conn, err := net.Dial("tcp", constr)
