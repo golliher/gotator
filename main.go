@@ -195,18 +195,23 @@ func runProgram(program Program) {
 		ctxt, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		// c, err := chromedp.New(ctxt, chromedp.WithTargets(client.New().WatchPageTargets(ctxt)) , chromedp.WithLog(log.Printf))
 		c, err := chromedp.New(ctxt, chromedp.WithTargets(client.New().WatchPageTargets(ctxt)))
-
 		if err != nil {
-			log.Println("Whatever")
-			log.Fatal(err)
+			log.Println("Something when wrong with chrome debugging connection")
+			log.Println(err)
+			log.Println("Sleeping for 30 seconds")
+			time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
+			return
+
 		}
 
 		err = c.Run(ctxt, chromedp.Navigate(program.URL))
 		if err != nil {
-			log.Println("That' cool")
-			log.Fatal(err)
+			log.Println("Something when wrong with navigating to URL with Chrome")
+			log.Println(err)
+
+			return
+
 		}
 
 	}
