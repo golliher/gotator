@@ -1,7 +1,7 @@
 BROWSER_IP: 127.0.0.1
 BROWSER_PORT: 9222
 BROWSER_CONTROL_MODE: 3
-program_file: internal.csv
+program_file: default.csv
 
 interactive: true
 apienabled: true

@@ -1,7 +1,13 @@
 /go-rotator
 /secondary.csv
 /TODO.org
+/journal.org
 /a.yaml
 /b.yaml
 /gotator-linux
 /gotator-mac
+/gotator-pi
+/eqconfig.yaml*
+/eqrel.sh*
+/equinox.key
+/equinox.pub
