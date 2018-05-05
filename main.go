@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -18,13 +17,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
-
-	// "github.com/chromedp/chromedp"
-	// "github.com/chromedp/chromedp/client"
-	// Forked from above with patches for this issue
-	// https://github.com/chromedp/chromedp/issues/75
-	"github.com/rjeczalik/chromedp"
-	"github.com/rjeczalik/chromedp/client"
+	"github.com/raff/godet"
 
 	"github.com/njasm/marionette_client"
 	"github.com/spf13/viper"
@@ -189,28 +182,24 @@ func runProgram(program Program) {
 	}
 	if mode == 3 {
 
-		var err error
-
-		// create context
-		ctxt, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		c, err := chromedp.New(ctxt, chromedp.WithTargets(client.New().WatchPageTargets(ctxt)))
+		remote, err := godet.Connect("localhost:9222", false)
 		if err != nil {
-			log.Println("Something when wrong with chrome debugging connection")
+			log.Println("Can not connect to Chrome instance:")
 			log.Println(err)
 			log.Println("Sleeping for 30 seconds")
 			time.Sleep(30 * time.Second) // wait 30 seconds to slow retries
 			return
-
 		}
+		// disconnect when done
+		defer remote.Close()
 
-		err = c.Run(ctxt, chromedp.Navigate(program.URL))
-		if err != nil {
-			log.Println("Something when wrong with navigating to URL with Chrome")
-			log.Println(err)
+		remote.Navigate(program.URL)
+		done := make(chan bool)
+		remote.CallbackEvent("Page.frameStoppedLoading", func(params godet.Params) {
+			fmt.Println("page loaded", params)
+			done <- true
+		})
 
-			return
 
 		}
 
