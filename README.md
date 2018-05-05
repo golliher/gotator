@@ -66,6 +66,8 @@ default.csv defines the content you want show by gotator
 
 ```GOTATOR_PORT``` The port Gotator will listen on for API requests.  Defaults to 8080
 
+```timeroverlay``` Set to 'true' to have gotator inject an overlay on top of pages show signal when program is about to change.
+
 Note:  You can edit config.yaml and change the program_file without interrupting the running gotator.   Gotator watches for 
 changes to config.yaml and pulls them in without a restart.  This can be useful for swapping out program files for a running
 gotator. 
