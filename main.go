@@ -121,6 +121,35 @@ func loadProgramList(filename string) []Program {
 
 func runProgram(program Program) {
 
+	timer_code := fmt.Sprintf(`
+
+function addStyleString(str) {
+    var node = document.createElement('style');
+    node.innerHTML = str;
+    document.body.appendChild(node);
+}
+
+var block_to_insert ;
+var container_block ;
+const duration = %v;
+block_to_insert = document.createElement( 'div' );
+block_to_insert.className = "gotator-overlay";
+block_to_insert.innerHTML = '<progress value="0" max=%v id="progressBar"></progress>';
+
+addStyleString('.gotator-overlay{ position: fixed; top: 0; left: 0; height: 0px; width: 100%%; z-index: 10000 ; background:white}');
+addStyleString('#progressBar{-webkit-appearance: none; appearance: none; height: 5px; width: 100%%');
+
+document.body.appendChild(block_to_insert);
+
+var timeleft = duration;
+var downloadTimer = setInterval(function(){
+  document.getElementById("progressBar").value = duration - --timeleft;
+  
+  if(timeleft <= 0)
+    clearInterval(downloadTimer);
+},1000);
+                `, program.Duration.Seconds(), program.Duration.Seconds())
+
 	ip := viper.Get("BROWSER_IP")
 	port := viper.GetInt("BROWSER_PORT")
 
@@ -175,10 +204,11 @@ func runProgram(program Program) {
 		client.NewSession("", nil) // let marionette generate the Session ID with it's default Capabilities
 		client.Navigate(program.URL)
 
-		// experiment with injecting randon script
-		// Maybe someday have a CSS overlay to give countdown until rotation?
-		// args := []interface{}{}
-		// client.ExecuteScript("alert('o hai there!');", args, 1000, false)
+		if viper.IsSet("timeroverlay") && viper.Get("timeroverlay") == true {
+			// Inject count down progress bar into page
+			args := []interface{}{}
+			client.ExecuteScript(timer_code, args, 1000, false)
+		}
 	}
 	if mode == 3 {
 
@@ -200,6 +230,13 @@ func runProgram(program Program) {
 			done <- true
 		})
 
+		remote.PageEvents(true)
+
+		_ = <-done
+
+		if viper.IsSet("timeroverlay") && viper.Get("timeroverlay") == true {
+			// Inject count down progress bar into page
+			_, _ = remote.EvaluateWrap(timer_code)
 
 		}
 
