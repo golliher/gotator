@@ -395,7 +395,13 @@ func main() {
 		r.HandleFunc("/resume", ResumeHandler)
 		r.HandleFunc("/skip", SkipHandler)
 
-		go log.Fatal(http.ListenAndServe(listen_port, r))
+		if viper.IsSet("tlsenabled") && viper.Get("tlsenabled") == true {
+			log.Printf("TLS is enabled.  Be sure to access API with https as protocol.")
+			go log.Fatal(http.ListenAndServeTLS(listen_port, "server.crt", "server.key", r))
+		} else {
+			go log.Fatal(http.ListenAndServe(listen_port, r))
+		}
+
 	} else {
 		log.Println("notice: rest API not enabled in configuration and will be unavailable.  set 'apienabled: true' in config.yaml if you want to use it.\n")
 		// If we aren't doing http.ListenAndServe() we need to block here or else gotator would exit immediately
