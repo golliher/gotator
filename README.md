@@ -4,7 +4,7 @@ Gotator is a program that runs continusouly and rotates content on a
 browser.  Firefox and Chrome are supported.  The use I had in mind
 was to control the rotation of content on an information radiator.
 
-I was not satisified with the status quo of using a browser plugin to 
+nI was not satisified with the status quo of using a browser plugin to 
 rotate on a evenly distributed schedule. For some content 10 seconds is 
 enough time.  For other content, 2 minutes might not be enough.
 
@@ -63,6 +63,10 @@ default.csv defines the content you want show by gotator
 ```program_file```  A CSV file containing a gotator program list.   Gotator ships with a configuration to use default.csv
 
 ```apienabled```  Set to 'true' to have gotator listen on HTTP and process REST API requests.  Defaults to false.
+
+```tlsenabled```  Set to 'true' to have gotator listen on HTTPS instead of HTTP  and process REST API requests.  Defaults to false.
+ 
+    You will need to provide server.key and server.crt files.  Google is your friend on creating certificates.
 
 ```GOTATOR_PORT``` The port Gotator will listen on for API requests.  Defaults to 8080
 
