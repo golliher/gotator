@@ -82,8 +82,6 @@ func InitializeConfig() {
 // with a number of seconds to display each one before moving on.
 func loadProgramList(filename string) []Program {
 
-	log.Printf("Loading programs from %s\n", filename)
-
 	var list []Program
 
 	bytes, err := ioutil.ReadFile(filename)
@@ -95,11 +93,11 @@ func loadProgramList(filename string) []Program {
 	r := csv.NewReader(strings.NewReader(webpages))
 	r.LazyQuotes = true
 
+	var c = 0
 	for {
 		var p Program
 		record, err := r.Read()
 		if err == io.EOF {
-			log.Println("Finished loading programs.")
 			break
 		}
 		if err != nil {
@@ -112,10 +110,10 @@ func loadProgramList(filename string) []Program {
 			log.Println("Program rejected.  Invalid duration.")
 		}
 
-		log.Printf("  Loaded program %.50s to show for %s.\n", p.URL, p.Duration)
 		list = append(list, p)
+		c++
 	}
-
+	log.Printf("Loaded %d programs from %s", c, filename)
 	return list
 }
 
@@ -156,7 +154,7 @@ var downloadTimer = setInterval(function(){
 	constr := fmt.Sprintf("%s:%d", ip, port)
 
 	log.Printf("Running program for %s", program.Duration)
-	log.Printf("URL %s", program.URL)
+	log.Printf("  URL %s", program.URL)
 
 	mode := viper.Get("BROWSER_CONTROL_MODE")
 	if mode == 1 {
@@ -226,7 +224,7 @@ var downloadTimer = setInterval(function(){
 		remote.Navigate(program.URL)
 		done := make(chan bool)
 		remote.CallbackEvent("Page.frameStoppedLoading", func(params godet.Params) {
-			fmt.Println("page loaded", params)
+			log.Println("page loaded")
 			done <- true
 		})
 
