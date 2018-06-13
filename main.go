@@ -358,7 +358,7 @@ var skip = make(chan struct{})
 var exitprogram = make(chan struct{})
 var pause bool
 var mu = &sync.Mutex{}
-var version = "0.1.1"
+var version = "0.2.0"
 
 func main() {
 
