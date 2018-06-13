@@ -397,9 +397,9 @@ func main() {
 
 		if viper.IsSet("tlsenabled") && viper.Get("tlsenabled") == true {
 			log.Printf("TLS is enabled.  Be sure to access API with https as protocol.")
-			go log.Fatal(http.ListenAndServeTLS(listen_port, "server.crt", "server.key", r))
+			log.Fatal(http.ListenAndServeTLS(listen_port, "server.crt", "server.key", r))
 		} else {
-			go log.Fatal(http.ListenAndServe(listen_port, r))
+			log.Fatal(http.ListenAndServe(listen_port, r))
 		}
 
 	} else {
