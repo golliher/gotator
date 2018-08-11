@@ -319,13 +319,17 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Program rejected.  Invalid duration.\n"))
 		return
 	}
-
-	// Stop normal rotation
-	Pause()
-
-	runProgram(p)
 	w.Write([]byte("Program accepted\n"))
+
+	go pauseAndRunProgram(p)
+
+}
+
+func pauseAndRunProgram(program Program) {
+	Pause()
+	runProgram(program)
 	Unpause()
+
 }
 
 func PauseHandler(w http.ResponseWriter, r *http.Request) {
