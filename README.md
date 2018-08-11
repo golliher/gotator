@@ -4,7 +4,7 @@ Gotator is a program that runs continusouly and rotates content on a
 browser.  Firefox and Chrome are supported.  The use I had in mind
 was to control the rotation of content on an information radiator.
 
-nI was not satisified with the status quo of using a browser plugin to 
+I was not satisified with the status quo of using a browser plugin to 
 rotate on a evenly distributed schedule. For some content 10 seconds is 
 enough time.  For other content, 2 minutes might not be enough.
 
