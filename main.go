@@ -308,9 +308,13 @@ func PlayHandler(w http.ResponseWriter, r *http.Request) {
 	d := r.Form.Get("duration")
 	log.Printf("Duration: %s\n", d)
 
-	// CAREFUL: There may be bugs here...
+	dur_text := r.Form.Get("duration")
+	if dur_text == "" {
+		dur_text = "30s"
+	}
+
 	var err error
-	p.Duration, err = time.ParseDuration(r.Form.Get("duration"))
+	p.Duration, err = time.ParseDuration(dur_text)
 	if err != nil {
 		w.Write([]byte("Program rejected.  Invalid duration.\n"))
 		return
